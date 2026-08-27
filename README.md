@@ -203,13 +203,20 @@ python -m unittest discover -s tests -v
 ├── .github/workflows/
 │   └── validate.yml
 ├── scripts/
-│   └── validate_audit_case.py
+│   ├── validate_audit_case.py
+│   └── create_github_plan.sh
+├── src/
+│   ├── __init__.py
+│   └── audit_case_model.py
 ├── tests/
 │   ├── test_validate_audit_case.py
 │   └── skill-test-cases.md
 ├── requirements-dev.txt
 ├── docs/
-│   └── v2-roadmap.md
+│   ├── integration-guide.md
+│   ├── issue-1-implementation-spec.md
+│   ├── v2-roadmap.md
+│   └── v2-github-plan.md
 ├── references/
 │   ├── platform-manual-testing.md
 │   └── taiwan-aa-checklist.md
@@ -230,8 +237,16 @@ python -m unittest discover -s tests -v
 - [`references/taiwan-aa-checklist.md`](references/taiwan-aa-checklist.md)：42 項 AA 工作化檢核清單。
 - [`references/platform-manual-testing.md`](references/platform-manual-testing.md)：Android、iOS 與行動 Web 人工測試流程。
 - [`templates/accessibility-audit-report.md`](templates/accessibility-audit-report.md)：檢測報告與回歸測試模板。
+- [`docs/integration-guide.md`](docs/integration-guide.md)：Claude Code、Claude Projects、Cursor 與其他 AI 助手的整合使用指南。
+- [`docs/issue-1-implementation-spec.md`](docs/issue-1-implementation-spec.md)：v2.0 #1 Issue 的詳細實作規格與完成定義。
 - [`docs/v2-roadmap.md`](docs/v2-roadmap.md)：第二版功能與擴充規劃。
 - [`docs/v2-github-plan.md`](docs/v2-github-plan.md)：GitHub Milestones 與 Issues 對照表。
+
+## 開發者文件
+
+- [AI 助手整合使用指南](docs/integration-guide.md)
+- [v2.0 #1 實作規格](docs/issue-1-implementation-spec.md)
+- [v2.x GitHub 開發計畫](docs/v2-github-plan.md)
 
 ## GitHub 開發追蹤
 
