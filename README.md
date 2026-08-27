@@ -135,6 +135,26 @@ python -m json.tool examples/audit-case.example.json >/dev/null
 
 先處理阻斷使用者完成核心流程的問題，再處理影響大量畫面或共用元件的問題，最後安排低風險的視覺與一致性改善。每項修正都應配對回歸步驟與預期結果，避免只寫「請改善無障礙」而沒有可驗證的完成條件。
 
+## 本地驗證與自動化測試
+
+安裝開發依賴後，可以直接驗證一份或多份 audit-case JSON：
+
+```bash
+python -m pip install -r requirements-dev.txt
+python scripts/validate_audit_case.py examples/audit-case.example.json
+python scripts/validate_audit_case.py --format json path/to/audit-case.json
+```
+
+驗證器會執行兩層檢查：第一層依 `schemas/audit-case.schema.json` 檢查 JSON Schema；第二層檢查完整文件內的證據、流程與環境引用，以及 `summary` 是否與實際 findings 統計一致。成功時回傳 exit code `0`，失敗時回傳 `1`，適合放入本地 Git hook 或 CI。
+
+執行自動化測試：
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+測試案例涵蓋有效範例、必要欄位缺失、無效 JSON、未知證據引用、未知流程引用、摘要不一致、機器可讀 JSON 輸出與多檔案驗證。Skill 的行為層級測試規格另見 [`tests/skill-test-cases.md`](tests/skill-test-cases.md)，涵蓋平台差異、證據限制、敏感資料、42 項檢核與非認證聲明。
+
 ## 輸出格式
 
 預設輸出應包含以下章節：
@@ -182,6 +202,12 @@ python -m json.tool examples/audit-case.example.json >/dev/null
 │   └── audit-case.schema.json
 ├── .github/workflows/
 │   └── validate.yml
+├── scripts/
+│   └── validate_audit_case.py
+├── tests/
+│   ├── test_validate_audit_case.py
+│   └── skill-test-cases.md
+├── requirements-dev.txt
 ├── docs/
 │   └── v2-roadmap.md
 ├── references/
@@ -193,6 +219,11 @@ python -m json.tool examples/audit-case.example.json >/dev/null
 
 - [`SKILL.md`](SKILL.md)：供 AI Agent 載入的核心工作指令與觸發條件。
 - [`schemas/audit-case.schema.json`](schemas/audit-case.schema.json)：v2.0 核心案件資料模型的 JSON Schema。
+- [`scripts/validate_audit_case.py`](scripts/validate_audit_case.py)：本地 JSON Schema 與跨引用一致性驗證器。
+- [`scripts/create_github_plan.sh`](scripts/create_github_plan.sh)：建立 v2.x Milestones 與 Issues 的可重複執行腳本。
+- [`tests/test_validate_audit_case.py`](tests/test_validate_audit_case.py)：驗證器的自動化測試案例。
+- [`tests/skill-test-cases.md`](tests/skill-test-cases.md)：Skill 行為層級與回歸測試規格。
+- [`requirements-dev.txt`](requirements-dev.txt)：本地驗證與測試所需的 Python 開發依賴。
 - [`examples/audit-case.example.json`](examples/audit-case.example.json)：可供複製修改的案件資料範例。
 - [`.github/workflows/validate.yml`](.github/workflows/validate.yml)：提交與 Pull Request 的 JSON 及必要檔案驗證工作流。
 - [`assets/project-showcase.png`](assets/project-showcase.png)：GitHub README 專案展示主視覺。
@@ -200,6 +231,11 @@ python -m json.tool examples/audit-case.example.json >/dev/null
 - [`references/platform-manual-testing.md`](references/platform-manual-testing.md)：Android、iOS 與行動 Web 人工測試流程。
 - [`templates/accessibility-audit-report.md`](templates/accessibility-audit-report.md)：檢測報告與回歸測試模板。
 - [`docs/v2-roadmap.md`](docs/v2-roadmap.md)：第二版功能與擴充規劃。
+- [`docs/v2-github-plan.md`](docs/v2-github-plan.md)：GitHub Milestones 與 Issues 對照表。
+
+## GitHub 開發追蹤
+
+v2.x 的開發工作已拆成 GitHub Milestones 與 Issues，對照表請見 [`docs/v2-github-plan.md`](docs/v2-github-plan.md)。目前分為 v2.0 核心案件資料與證據、v2.1 平台與框架支援、v2.2 CI 與回歸自動化，以及 v2.3 規範治理與品質四個里程碑。
 
 ## 版本與發佈
 
