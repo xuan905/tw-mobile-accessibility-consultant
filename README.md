@@ -135,6 +135,18 @@ python -m json.tool examples/audit-case.example.json >/dev/null
 
 先處理阻斷使用者完成核心流程的問題，再處理影響大量畫面或共用元件的問題，最後安排低風險的視覺與一致性改善。每項修正都應配對回歸步驟與預期結果，避免只寫「請改善無障礙」而沒有可驗證的完成條件。
 
+## v2.0 檢測規則引擎
+
+第二階段新增可配置的 [`rules/default-rules.json`](rules/default-rules.json) 與 [`scripts/evaluate_audit_rules.py`](scripts/evaluate_audit_rules.py)。規則引擎會檢查案件紀錄是否具備證據、修正建議、下一步行動、測試環境與一致的整體結論；它不會把截圖或原始碼誤當成實機讀屏通過，也不取代人工 TalkBack／VoiceOver 測試。
+
+```bash
+python scripts/validate_audit_case.py examples/audit-case.example.json
+python scripts/evaluate_audit_rules.py examples/audit-case.example.json
+python scripts/evaluate_audit_rules.py --format json examples/audit-case.example.json
+```
+
+詳細規格請見 [`docs/v2.0-rules-engine-spec.md`](docs/v2.0-rules-engine-spec.md)。目前支援 `finding`、`case` 與 `document` 三種規則作用域，並提供 high／medium／low 嚴重度與可供 CI 解析的 JSON 輸出。
+
 ## 本地驗證與自動化測試
 
 安裝開發依賴後，可以直接驗證一份或多份 audit-case JSON：
@@ -153,7 +165,7 @@ python scripts/validate_audit_case.py --format json path/to/audit-case.json
 python -m unittest discover -s tests -v
 ```
 
-測試案例涵蓋有效範例、必要欄位缺失、無效 JSON、未知證據引用、未知流程引用、摘要不一致、機器可讀 JSON 輸出與多檔案驗證。Skill 的行為層級測試規格另見 [`tests/skill-test-cases.md`](tests/skill-test-cases.md)，涵蓋平台差異、證據限制、敏感資料、42 項檢核與非認證聲明。
+測試案例涵蓋有效範例、必要欄位缺失、無效 JSON、未知證據引用、未知流程引用、摘要不一致、機器可讀 JSON 輸出、多檔案驗證，以及空值、錯誤列舉、錯誤識別碼、額外欄位、日期格式、空流程與負數統計等邊界條件。規則引擎另有專用測試，覆蓋證據、修正、下一步與 pending 結論規則。Skill 的行為層級測試規格另見 [`tests/skill-test-cases.md`](tests/skill-test-cases.md)，涵蓋平台差異、證據限制、敏感資料、42 項檢核與非認證聲明。
 
 ## 輸出格式
 
@@ -196,6 +208,8 @@ python -m unittest discover -s tests -v
 ├── README.md
 ├── assets/
 │   └── project-showcase.png
+├── rules/
+│   └── default-rules.json
 ├── examples/
 │   └── audit-case.example.json
 ├── schemas/
@@ -204,17 +218,20 @@ python -m unittest discover -s tests -v
 │   └── validate.yml
 ├── scripts/
 │   ├── validate_audit_case.py
+│   ├── evaluate_audit_rules.py
 │   └── create_github_plan.sh
 ├── src/
 │   ├── __init__.py
 │   └── audit_case_model.py
 ├── tests/
 │   ├── test_validate_audit_case.py
+│   ├── test_evaluate_audit_rules.py
 │   └── skill-test-cases.md
 ├── requirements-dev.txt
 ├── docs/
 │   ├── integration-guide.md
 │   ├── issue-1-implementation-spec.md
+│   ├── v2.0-rules-engine-spec.md
 │   ├── v2-roadmap.md
 │   └── v2-github-plan.md
 ├── references/
@@ -227,6 +244,8 @@ python -m unittest discover -s tests -v
 - [`SKILL.md`](SKILL.md)：供 AI Agent 載入的核心工作指令與觸發條件。
 - [`schemas/audit-case.schema.json`](schemas/audit-case.schema.json)：v2.0 核心案件資料模型的 JSON Schema。
 - [`scripts/validate_audit_case.py`](scripts/validate_audit_case.py)：本地 JSON Schema 與跨引用一致性驗證器。
+- [`scripts/evaluate_audit_rules.py`](scripts/evaluate_audit_rules.py)：v2.0 可配置檢測規則引擎。
+- [`rules/default-rules.json`](rules/default-rules.json)：預設品質規則包。
 - [`scripts/create_github_plan.sh`](scripts/create_github_plan.sh)：建立 v2.x Milestones 與 Issues 的可重複執行腳本。
 - [`tests/test_validate_audit_case.py`](tests/test_validate_audit_case.py)：驗證器的自動化測試案例。
 - [`tests/skill-test-cases.md`](tests/skill-test-cases.md)：Skill 行為層級與回歸測試規格。
@@ -239,6 +258,7 @@ python -m unittest discover -s tests -v
 - [`templates/accessibility-audit-report.md`](templates/accessibility-audit-report.md)：檢測報告與回歸測試模板。
 - [`docs/integration-guide.md`](docs/integration-guide.md)：Claude Code、Claude Projects、Cursor 與其他 AI 助手的整合使用指南。
 - [`docs/issue-1-implementation-spec.md`](docs/issue-1-implementation-spec.md)：v2.0 #1 Issue 的詳細實作規格與完成定義。
+- [`docs/v2.0-rules-engine-spec.md`](docs/v2.0-rules-engine-spec.md)：v2.0 第二階段檢測規則引擎規格。
 - [`docs/v2-roadmap.md`](docs/v2-roadmap.md)：第二版功能與擴充規劃。
 - [`docs/v2-github-plan.md`](docs/v2-github-plan.md)：GitHub Milestones 與 Issues 對照表。
 

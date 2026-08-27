@@ -13,6 +13,7 @@ import argparse
 import json
 import sys
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,31 @@ def schema_errors(document: Any, schema: dict[str, Any]) -> list[str]:
     for error in sorted(validator.iter_errors(document), key=lambda item: list(item.path)):
         location = "$." + ".".join(str(part) for part in error.path) if error.path else "$"
         errors.append(f"{location}: {error.message}")
+    errors.extend(datetime_errors(document))
+    return errors
+
+
+def datetime_errors(document: dict[str, Any]) -> list[str]:
+    """Apply a strict ISO 8601 check independent of library format behavior."""
+
+    errors: list[str] = []
+    candidates = [
+        ("$.metadata.created_at", document.get("metadata", {}).get("created_at")),
+        ("$.metadata.updated_at", document.get("metadata", {}).get("updated_at")),
+    ]
+    for index, evidence in enumerate(document.get("evidence", [])):
+        candidates.append((f"$.evidence[{index}].captured_at", evidence.get("captured_at")))
+    for index, finding in enumerate(document.get("findings", [])):
+        regression = finding.get("regression", {})
+        candidates.append((f"$.findings[{index}].regression.tested_at", regression.get("tested_at")))
+
+    for location, value in candidates:
+        if value is None:
+            continue
+        try:
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except (AttributeError, TypeError, ValueError):
+            errors.append(f"{location}: must be a valid ISO 8601 date-time")
     return errors
 
 

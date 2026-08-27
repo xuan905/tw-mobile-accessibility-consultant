@@ -88,6 +88,83 @@ class ValidateAuditCaseTests(unittest.TestCase):
         self.assertEqual(result.stdout.count("PASS"), 1)
         self.assertEqual(result.stdout.count("FAIL"), 1)
 
+    def test_empty_schema_version_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["schema_version"] = ""
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("schema_version", result.stdout)
+
+    def test_invalid_status_enum_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["findings"][0]["status"] = "unknown"
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unknown", result.stdout)
+
+    def test_invalid_check_id_format_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["findings"][0]["check_id"] = "AA-0"
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("check_id", result.stdout)
+
+    def test_invalid_evidence_id_format_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["evidence"][0]["evidence_id"] = "evidence-one"
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("evidence_id", result.stdout)
+
+    def test_additional_top_level_property_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["unexpected"] = True
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unexpected", result.stdout)
+
+    def test_invalid_summary_total_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["summary"]["total"] = 41
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("summary.total", result.stdout)
+
+    def test_invalid_datetime_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["metadata"]["created_at"] = "not-a-datetime"
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("created_at", result.stdout)
+
+    def test_null_case_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["case"] = None
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("case", result.stdout)
+
+    def test_empty_flows_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["case"]["flows"] = []
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("flows", result.stdout)
+
+    def test_negative_summary_count_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["summary"]["fail"] = -1
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("summary.fail", result.stdout)
+
+    def test_unknown_environment_reference_fails(self) -> None:
+        document = copy.deepcopy(self.valid_case)
+        document["findings"][0]["environment_ids"] = ["ENV-999"]
+        result = self.run_validator(self.write_case(document))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unknown environment id ENV-999", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

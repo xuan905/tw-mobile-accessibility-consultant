@@ -1,0 +1,54 @@
+{
+  "rules_version": "2.0.0",
+  "description": "Deterministic quality rules for accessibility audit-case documents.",
+  "rules": [
+    {
+      "rule_id": "R-FINDING-EVIDENCE",
+      "scope": "finding",
+      "when": {"status_in": ["pass", "fail"]},
+      "assert": {"field": "evidence_ids", "min_items": 1},
+      "severity": "high",
+      "message": "通過或不通過的 finding 必須至少引用一份證據。"
+    },
+    {
+      "rule_id": "R-FAIL-REMEDIATION",
+      "scope": "finding",
+      "when": {"status_equals": "fail"},
+      "assert": {"field": "remediation", "not_empty": true},
+      "severity": "high",
+      "message": "不通過的 finding 必須提供可執行的修正建議。"
+    },
+    {
+      "rule_id": "R-FAIL-NEXT-ACTION",
+      "scope": "finding",
+      "when": {"status_equals": "fail"},
+      "assert": {"field": "next_action", "not_empty": true},
+      "severity": "medium",
+      "message": "不通過的 finding 必須提供下一步或回歸行動。"
+    },
+    {
+      "rule_id": "R-PENDING-NEXT-ACTION",
+      "scope": "finding",
+      "when": {"status_equals": "pending"},
+      "assert": {"field": "next_action", "not_empty": true},
+      "severity": "medium",
+      "message": "待確認的 finding 必須說明補證或人工測試的下一步。"
+    },
+    {
+      "rule_id": "R-CORE-ENVIRONMENT",
+      "scope": "case",
+      "when": {"field_exists": "flows", "min_items": 1},
+      "assert": {"field": "test_environments", "min_items": 1},
+      "severity": "high",
+      "message": "有核心流程時，案件必須至少記錄一個測試環境。"
+    },
+    {
+      "rule_id": "R-INCOMPLETE-SUMMARY",
+      "scope": "document",
+      "when": {"summary_pending_gt": 0},
+      "assert": {"summary_overall_not_equals": "pass"},
+      "severity": "medium",
+      "message": "仍有待確認項目時，整體結論不可標示為 pass。"
+    }
+  ]
+}
