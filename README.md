@@ -241,7 +241,7 @@ python scripts/validate_audit_case.py --format json path/to/audit-case.json
 python -m unittest discover -s tests -v
 ```
 
-目前共有 29 個可執行測試，涵蓋有效範例、必要欄位缺失、無效 JSON、未知證據引用、未知流程引用、摘要不一致、機器可讀 JSON 輸出、多檔案驗證，以及空值、錯誤列舉、錯誤識別碼、額外欄位、日期格式、空流程與負數統計等邊界條件。規則引擎另有專用測試，覆蓋證據、修正、下一步與 pending 結論規則；報告生成器則測試 42 項逐項表格、規則警告、無效案件、草稿模式與 Markdown escaping。Skill 的行為層級測試規格另見 [`tests/skill-test-cases.md`](tests/skill-test-cases.md)，涵蓋平台差異、證據限制、敏感資料、42 項檢核與非認證聲明。
+目前共有 31 個可執行測試，涵蓋有效範例、必要欄位缺失、無效 JSON、未知證據引用、未知流程引用、摘要不一致、機器可讀 JSON 輸出、多檔案驗證，以及空值、錯誤列舉、錯誤識別碼、額外欄位、日期格式、空流程與負數統計等邊界條件。規則引擎另有專用測試，覆蓋證據、修正、下一步與 pending 結論規則；報告生成器則測試 42 項逐項表格、規則警告、無效案件、草稿模式與 Markdown escaping。Skill 的行為層級測試規格另見 [`tests/skill-test-cases.md`](tests/skill-test-cases.md)，涵蓋平台差異、證據限制、敏感資料、42 項檢核與非認證聲明。覆蓋率報告可用 [`scripts/generate_coverage_report.py`](scripts/generate_coverage_report.py) 產生，打包工具則位於 [`scripts/package_report.py`](scripts/package_report.py)。
 
 ## 輸出格式
 
@@ -364,3 +364,47 @@ v2.x 的開發工作已拆成 GitHub Milestones 與 Issues，對照表請見 [`d
 
 [1]: https://accessibility.moda.gov.tw/Download/Detail/1425?Category=51 "數位發展部無障礙網路空間服務網：行動版無障礙規範相關文件"
 [2]: https://docs.openclaw.ai/clawhub/ "ClawHub 官方文件：Skill 發佈與格式說明"
+
+## 測試覆蓋率與 CI 產物
+
+使用下列指令在本地執行自動化測試，並產生覆蓋率報告：
+
+```bash
+python -m pip install -r requirements-dev.txt
+python scripts/generate_coverage_report.py --output-dir coverage-report
+```
+
+腳本會產生 `coverage-report/coverage.md`、`coverage.xml`、`coverage.json` 與 `html/index.html`。目前基準執行結果為 **61.34% statement coverage**；此數值是品質基線，不是無障礙合規分數，也不能取代 Android／iOS 實機人工檢測。
+
+GitHub Actions 在每次 `push` 與 Pull Request 都會執行測試、覆蓋率產生與報告打包，並把以下內容上傳為保留 14 天的 artifact：
+
+- `coverage.md`：可讀的覆蓋率摘要。
+- `coverage.xml`：供 CI 品質工具讀取。
+- `coverage.json`：供後續 Dashboard 或品質閘門使用。
+- `html/`：逐行覆蓋率瀏覽頁面。
+- `smoke-report.html` 與 `smoke-report.pdf`：報告打包器的產物驗證。
+
+## Markdown 報告一鍵打包
+
+新增 `scripts/package_report.py`，可將由報告生成器產出的 Markdown 包裝成獨立 HTML，或使用 WeasyPrint 產生 A4 PDF：
+
+```bash
+python scripts/package_report.py reports/audit-case.md \
+  --html dist/audit-case.html \
+  --pdf dist/audit-case.pdf
+```
+
+也可以只產生其中一種格式：
+
+```bash
+python scripts/package_report.py reports/audit-case.md --html dist/audit-case.html
+python scripts/package_report.py reports/audit-case.md --pdf dist/audit-case.pdf
+```
+
+輸出會保留表格、程式碼區塊、標題層級、繁體中文語系與列印版式。PDF 輸出需要先安裝 `requirements-dev.txt` 中的 WeasyPrint；若只需要 HTML，可不使用 PDF 依賴。
+
+## 線上報告預覽 Dashboard
+
+本 repository 的案件資料可以載入線上 Evidence Flow Accessibility Audit Dashboard 預覽。工具目前支援在瀏覽器本機載入 `audit-case` JSON、檢視總覽、逐項 finding、證據索引、Android／iOS 平台環境、報告輸出，並下載 Markdown 報告或原始 JSON。
+
+Dashboard 不會把資料上傳到後端；案件 JSON 只在使用者目前的瀏覽器工作階段處理。正式驗收前，仍應以 repository 內的 Schema 驗證器、規則引擎及實機人工測試作為主要依據。
