@@ -31,6 +31,9 @@ jobs:
       - name: Evaluate default accessibility rules
         run: python scripts/evaluate_audit_rules.py examples/audit-case.example.json
 
+      - name: Generate Markdown audit report
+        run: python scripts/generate_audit_report.py examples/audit-case.example.json --output /tmp/audit-case-report.md
+
       - name: Validate JSON documents
         run: |
           python -m json.tool schemas/audit-case.schema.json >/dev/null

@@ -147,6 +147,82 @@ python scripts/evaluate_audit_rules.py --format json examples/audit-case.example
 
 詳細規格請見 [`docs/v2.0-rules-engine-spec.md`](docs/v2.0-rules-engine-spec.md)。目前支援 `finding`、`case` 與 `document` 三種規則作用域，並提供 high／medium／low 嚴重度與可供 CI 解析的 JSON 輸出。
 
+### 規則引擎完整範例
+
+建議先執行 Schema 驗證，再執行規則引擎。這樣可以先排除欄位、型別、識別碼與跨引用錯誤，再處理品質規則：
+
+```bash
+python scripts/validate_audit_case.py examples/audit-case.example.json
+python scripts/evaluate_audit_rules.py \
+  --rules rules/default-rules.json \
+  examples/audit-case.example.json
+```
+
+成功輸出：
+
+```text
+PASS examples/audit-case.example.json: no rule violations
+```
+
+若案件中的 fail finding 沒有證據或修正建議，文字輸出會指出規則、嚴重度與 JSONPath：
+
+```text
+FAIL case.json: 2 rule violation(s)
+  - [high] R-FINDING-EVIDENCE $.findings[0]: 通過或不通過的 finding 必須至少引用一份證據。
+  - [high] R-FAIL-REMEDIATION $.findings[0]: 不通過的 finding 必須提供可執行的修正建議。
+```
+
+在 CI 或其他程式中使用時，改用機器可讀輸出：
+
+```bash
+python scripts/evaluate_audit_rules.py \
+  --format json \
+  examples/audit-case.example.json > rule-results.json
+```
+
+### 自訂規則
+
+自訂規則是 JSON 陣列，保留 `rule_id`、`scope`、`when`、`assert`、`severity` 與 `message`。例如，要求每個待確認 finding 都必須有至少一份證據：
+
+```json
+{
+  "rules_version": "2.0.0",
+  "rules": [
+    {
+      "rule_id": "CUSTOM-PENDING-EVIDENCE",
+      "scope": "finding",
+      "when": {"status_equals": "pending"},
+      "assert": {"field": "evidence_ids", "min_items": 1},
+      "severity": "medium",
+      "message": "待確認項目必須先附上目前可取得的證據。"
+    }
+  ]
+}
+```
+
+將規則保存為 `rules/project-rules.json` 後執行：
+
+```bash
+python scripts/evaluate_audit_rules.py \
+  --rules rules/project-rules.json \
+  --format json \
+  path/to/audit-case.json
+```
+
+目前支援的條件包括 `status_equals`、`status_in`、`field_exists`、`summary_pending_gt`；支援的斷言包括 `min_items`、`not_empty` 與 `summary_overall_not_equals`。自訂規則應保持專案資料無關，不要把帳密、權杖或個資寫進規則檔。規則引擎是品質閘門，不是官方認證判定。
+
+### 自動生成檢測報告
+
+第三階段報告生成器會讀取同一份案件、規則包與 42 項清單，產生包含摘要、重大缺失、42 項逐項結果、平台紀錄、回歸計畫、待確認事項與規則警告的 Markdown：
+
+```bash
+python scripts/generate_audit_report.py \
+  examples/audit-case.example.json \
+  --output reports/audit-case-demo.md
+```
+
+詳細規格請見 [`docs/v2.0-report-generator-spec.md`](docs/v2.0-report-generator-spec.md)。
+
 ## 本地驗證與自動化測試
 
 安裝開發依賴後，可以直接驗證一份或多份 audit-case JSON：
@@ -165,7 +241,7 @@ python scripts/validate_audit_case.py --format json path/to/audit-case.json
 python -m unittest discover -s tests -v
 ```
 
-測試案例涵蓋有效範例、必要欄位缺失、無效 JSON、未知證據引用、未知流程引用、摘要不一致、機器可讀 JSON 輸出、多檔案驗證，以及空值、錯誤列舉、錯誤識別碼、額外欄位、日期格式、空流程與負數統計等邊界條件。規則引擎另有專用測試，覆蓋證據、修正、下一步與 pending 結論規則。Skill 的行為層級測試規格另見 [`tests/skill-test-cases.md`](tests/skill-test-cases.md)，涵蓋平台差異、證據限制、敏感資料、42 項檢核與非認證聲明。
+目前共有 29 個可執行測試，涵蓋有效範例、必要欄位缺失、無效 JSON、未知證據引用、未知流程引用、摘要不一致、機器可讀 JSON 輸出、多檔案驗證，以及空值、錯誤列舉、錯誤識別碼、額外欄位、日期格式、空流程與負數統計等邊界條件。規則引擎另有專用測試，覆蓋證據、修正、下一步與 pending 結論規則；報告生成器則測試 42 項逐項表格、規則警告、無效案件、草稿模式與 Markdown escaping。Skill 的行為層級測試規格另見 [`tests/skill-test-cases.md`](tests/skill-test-cases.md)，涵蓋平台差異、證據限制、敏感資料、42 項檢核與非認證聲明。
 
 ## 輸出格式
 
@@ -219,6 +295,7 @@ python -m unittest discover -s tests -v
 ├── scripts/
 │   ├── validate_audit_case.py
 │   ├── evaluate_audit_rules.py
+│   └── generate_audit_report.py
 │   └── create_github_plan.sh
 ├── src/
 │   ├── __init__.py
@@ -226,6 +303,7 @@ python -m unittest discover -s tests -v
 ├── tests/
 │   ├── test_validate_audit_case.py
 │   ├── test_evaluate_audit_rules.py
+│   └── test_generate_audit_report.py
 │   └── skill-test-cases.md
 ├── requirements-dev.txt
 ├── docs/
@@ -245,6 +323,7 @@ python -m unittest discover -s tests -v
 - [`schemas/audit-case.schema.json`](schemas/audit-case.schema.json)：v2.0 核心案件資料模型的 JSON Schema。
 - [`scripts/validate_audit_case.py`](scripts/validate_audit_case.py)：本地 JSON Schema 與跨引用一致性驗證器。
 - [`scripts/evaluate_audit_rules.py`](scripts/evaluate_audit_rules.py)：v2.0 可配置檢測規則引擎。
+- [`scripts/generate_audit_report.py`](scripts/generate_audit_report.py)：v2.0 第三階段 Markdown 檢測報告生成器。
 - [`rules/default-rules.json`](rules/default-rules.json)：預設品質規則包。
 - [`scripts/create_github_plan.sh`](scripts/create_github_plan.sh)：建立 v2.x Milestones 與 Issues 的可重複執行腳本。
 - [`tests/test_validate_audit_case.py`](tests/test_validate_audit_case.py)：驗證器的自動化測試案例。
@@ -259,6 +338,7 @@ python -m unittest discover -s tests -v
 - [`docs/integration-guide.md`](docs/integration-guide.md)：Claude Code、Claude Projects、Cursor 與其他 AI 助手的整合使用指南。
 - [`docs/issue-1-implementation-spec.md`](docs/issue-1-implementation-spec.md)：v2.0 #1 Issue 的詳細實作規格與完成定義。
 - [`docs/v2.0-rules-engine-spec.md`](docs/v2.0-rules-engine-spec.md)：v2.0 第二階段檢測規則引擎規格。
+- [`docs/v2.0-report-generator-spec.md`](docs/v2.0-report-generator-spec.md)：v2.0 第三階段自動化檢測報告生成器規格。
 - [`docs/v2-roadmap.md`](docs/v2-roadmap.md)：第二版功能與擴充規劃。
 - [`docs/v2-github-plan.md`](docs/v2-github-plan.md)：GitHub Milestones 與 Issues 對照表。
 
