@@ -1,5 +1,12 @@
 # 台灣行動 App 無障礙檢測與改善顧問
 
+[![Validate Skill](https://github.com/xuan905/tw-mobile-accessibility-consultant/actions/workflows/validate.yml/badge.svg)](https://github.com/xuan905/tw-mobile-accessibility-consultant/actions/workflows/validate.yml)
+[![GitHub release](https://img.shields.io/github/v/release/xuan905/tw-mobile-accessibility-consultant?sort=semver&color=2f80ed)](https://github.com/xuan905/tw-mobile-accessibility-consultant/releases)
+[![ClawHub](https://img.shields.io/badge/ClawHub-published-d94f3d)](https://clawhub.ai/xuan905/tw-mobile-accessibility-consultant)
+[![License](https://img.shields.io/badge/license-MIT--0-1f2937)](https://github.com/xuan905/tw-mobile-accessibility-consultant)
+
+![台灣行動 App 無障礙檢測與改善顧問專案展示圖](assets/project-showcase.png)
+
 `tw-mobile-accessibility-consultant` 是一個面向台灣繁體中文情境的行動 App、行動網站與 Web App 無障礙檢測 Skill。它將無障礙規範轉換成可執行的 QA 流程，協助產品、設計、工程、QA、稽核與專案管理人員從「發現問題」一路做到「提出修正、建立證據與安排回歸測試」。
 
 本 Skill 特別適合需要依台灣政府無障礙規範建立檢測紀錄的專案。它包含 42 項 AA 工作化檢核架構、Android TalkBack 與 iOS VoiceOver 的基本人工測試流程，以及可直接複製使用的檢測報告模板。官方規範、最新申請程序與正式認證結果仍應以主管機關公布的最新版本為準。[1] [2]
@@ -65,6 +72,19 @@ Skill 應先確認產品範圍與證據，再執行以下順序：
 3. 依 42 項 AA 清單逐項記錄狀態、證據、觀察、建議與回歸測試。
 4. 將阻斷操作、核心流程失敗、錯誤訊息不可感知與焦點遺失列為高優先級。
 5. 輸出平台限制、未驗證事項與下一步測試建議。
+
+## v2.0 核心案件資料模型
+
+第二版的核心資料模型以案件、測試流程、測試環境、證據、檢核發現、回歸測試與摘要為主要實體。正式規格位於 [`schemas/audit-case.schema.json`](schemas/audit-case.schema.json)，可用於驗證案件檔案的欄位、型別、識別碼格式、狀態值與必要資訊。
+
+```bash
+python -m json.tool schemas/audit-case.schema.json >/dev/null
+python -m json.tool examples/audit-case.example.json >/dev/null
+```
+
+完整範例位於 [`examples/audit-case.example.json`](examples/audit-case.example.json)。案件模型刻意將「證據」與「檢核結果」分開，讓同一份截圖、錄音、原始碼或實機紀錄可以被多個檢核引用；每個發現則以 `AA-01` 等穩定檢核編號與 `E-001` 等證據編號建立可追溯關係。
+
+模型中的 `verification_level` 用來區分已觀察、可重現、由材料推定與待人工審查；`status` 則固定使用 `pass`、`fail`、`not_applicable` 與 `pending`。這兩組欄位不可混用：例如「由截圖推定沒有問題」仍可能是 `pending`，而不是 `pass`。
 
 ## 輸入材料
 
@@ -154,6 +174,16 @@ Skill 應先確認產品範圍與證據，再執行以下順序：
 .
 ├── SKILL.md
 ├── README.md
+├── assets/
+│   └── project-showcase.png
+├── examples/
+│   └── audit-case.example.json
+├── schemas/
+│   └── audit-case.schema.json
+├── .github/workflows/
+│   └── validate.yml
+├── docs/
+│   └── v2-roadmap.md
 ├── references/
 │   ├── platform-manual-testing.md
 │   └── taiwan-aa-checklist.md
@@ -162,6 +192,10 @@ Skill 應先確認產品範圍與證據，再執行以下順序：
 ```
 
 - [`SKILL.md`](SKILL.md)：供 AI Agent 載入的核心工作指令與觸發條件。
+- [`schemas/audit-case.schema.json`](schemas/audit-case.schema.json)：v2.0 核心案件資料模型的 JSON Schema。
+- [`examples/audit-case.example.json`](examples/audit-case.example.json)：可供複製修改的案件資料範例。
+- [`.github/workflows/validate.yml`](.github/workflows/validate.yml)：提交與 Pull Request 的 JSON 及必要檔案驗證工作流。
+- [`assets/project-showcase.png`](assets/project-showcase.png)：GitHub README 專案展示主視覺。
 - [`references/taiwan-aa-checklist.md`](references/taiwan-aa-checklist.md)：42 項 AA 工作化檢核清單。
 - [`references/platform-manual-testing.md`](references/platform-manual-testing.md)：Android、iOS 與行動 Web 人工測試流程。
 - [`templates/accessibility-audit-report.md`](templates/accessibility-audit-report.md)：檢測報告與回歸測試模板。

@@ -1,0 +1,125 @@
+{
+  "schema_version": "2.0.0",
+  "case": {
+    "case_id": "demo-shopping-app-2026",
+    "product": "好好購",
+    "version": "1.0.0",
+    "product_type": "android_app",
+    "platforms": ["android", "ios"],
+    "scope": "登入、商品搜尋、商品詳情、加入購物車、結帳",
+    "flows": [
+      {
+        "flow_id": "FLOW-01",
+        "name": "登入",
+        "priority": "critical",
+        "steps": ["開啟登入頁", "輸入測試帳號", "送出表單", "處理錯誤或成功狀態"],
+        "completion_criteria": "使用者能完成登入或理解錯誤原因並修正"
+      },
+      {
+        "flow_id": "FLOW-02",
+        "name": "搜尋與加入購物車",
+        "priority": "high",
+        "steps": ["搜尋商品", "開啟商品詳情", "選擇規格", "加入購物車"],
+        "completion_criteria": "使用者能辨識商品資訊、選擇規格並確認加入結果"
+      },
+      {
+        "flow_id": "FLOW-03",
+        "name": "結帳",
+        "priority": "critical",
+        "steps": ["開啟購物車", "填寫收件資料", "確認訂單", "接收成功或錯誤提示"],
+        "completion_criteria": "使用者能完成或安全中止結帳流程"
+      }
+    ],
+    "test_environments": [
+      {
+        "environment_id": "ENV-01",
+        "platform": "android",
+        "device_model": "Pixel 8",
+        "os_version": "Android 15",
+        "app_version": "1.0.0",
+        "assistive_technology": "talkback",
+        "settings": ["字級 100%", "顯示大小 100%"]
+      },
+      {
+        "environment_id": "ENV-02",
+        "platform": "ios",
+        "device_model": "iPhone 15",
+        "os_version": "iOS 18",
+        "app_version": "1.0.0",
+        "assistive_technology": "voiceover",
+        "settings": ["文字大小預設", "粗體文字關閉"]
+      }
+    ],
+    "standard": {
+      "name": "台灣行動版無障礙檢核架構",
+      "revision": "AA working checklist v1",
+      "source_url": "https://accessibility.moda.gov.tw/Download/Detail/1425?Category=51",
+      "checklist_total": 42,
+      "target_level": "AA"
+    },
+    "test_accounts": [
+      {
+        "account_id": "TEST-LOGIN-01",
+        "purpose": "一般登入與錯誤訊息測試",
+        "sensitive_data_removed": true
+      }
+    ],
+    "out_of_scope": ["正式政府認證申請", "真實付款交易", "後台管理系統"]
+  },
+  "evidence": [
+    {
+      "evidence_id": "E-001",
+      "type": "screenshot",
+      "title": "登入頁面截圖",
+      "source": "evidence/login-screen.png",
+      "environment_id": "ENV-01",
+      "verification_level": "observed",
+      "contains_sensitive_data": false
+    },
+    {
+      "evidence_id": "E-002",
+      "type": "manual_note",
+      "title": "TalkBack 登入錯誤測試紀錄",
+      "source": "evidence/talkback-login.md",
+      "environment_id": "ENV-01",
+      "verification_level": "reproducible",
+      "contains_sensitive_data": false
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-001",
+      "check_id": "AA-01",
+      "status": "fail",
+      "title": "圖示按鈕沒有可理解的名稱",
+      "severity": "high",
+      "affected_users": ["螢幕閱讀器使用者", "認知障礙使用者"],
+      "flow_ids": ["FLOW-01", "FLOW-02"],
+      "environment_ids": ["ENV-01", "ENV-02"],
+      "evidence_ids": ["E-001", "E-002"],
+      "observation": "購物車與返回圖示在讀屏中只讀出泛用控制項名稱，無法辨識用途。",
+      "expected_result": "每個互動圖示都應有與功能相符的可理解名稱。",
+      "remediation": "為共用圖示元件補上平台可感知的名稱與角色，並檢查是否被錯誤拆成多個可操作元素。",
+      "owner_role": "engineering",
+      "next_action": "修正共用導覽與購物車元件後，以 TalkBack 與 VoiceOver 重跑 FLOW-01 與 FLOW-02。",
+      "regression": {
+        "steps": ["啟用螢幕閱讀器", "線性瀏覽登入頁與商品頁", "操作返回與購物車"],
+        "expected_result": "讀屏能說出每個圖示的功能與目前狀態。",
+        "status": "pending"
+      }
+    }
+  ],
+  "summary": {
+    "pass": 0,
+    "fail": 1,
+    "not_applicable": 0,
+    "pending": 41,
+    "total": 42,
+    "overall_conclusion": "incomplete"
+  },
+  "metadata": {
+    "created_at": "2026-08-27T00:00:00Z",
+    "updated_at": "2026-08-27T00:00:00Z",
+    "created_by": "demo"
+  }
+}
