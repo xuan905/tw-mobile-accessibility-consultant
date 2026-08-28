@@ -223,6 +223,20 @@ python scripts/generate_audit_report.py \
 
 詳細規格請見 [`docs/v2.0-report-generator-spec.md`](docs/v2.0-report-generator-spec.md)。
 
+## skillctl：整理多個 Skill 的本地 CLI
+
+Repository 內附 `skillctl`，協助開發者掃描、驗證、初始化與打包多個 `SKILL.md` 套件。它不需要額外套件，適合在本地、Git hook 或 CI 中執行：
+
+```bash
+./bin/skillctl inventory .
+./bin/skillctl validate .
+./bin/skillctl validate . --json
+./bin/skillctl init tw-example-skill --output ./skills
+./bin/skillctl package ./skills/tw-example-skill -o ./dist/tw-example-skill.zip
+```
+
+`validate` 會檢查 frontmatter、kebab-case 名稱、描述、body 行數與必要結構；`--strict-package` 會額外拒絕純 Skill package 不應包含的 `README.md` 與 `CHANGELOG.md`。完整說明請見 [`docs/skillctl-guide.md`](docs/skillctl-guide.md)，CLI 實作在 [`scripts/skillctl.py`](scripts/skillctl.py)，測試在 [`tests/test_skillctl.py`](tests/test_skillctl.py)。
+
 ## 本地驗證與自動化測試
 
 安裝開發依賴後，可以直接驗證一份或多份 audit-case JSON：
@@ -321,6 +335,8 @@ python -m unittest discover -s tests -v
 
 - [`SKILL.md`](SKILL.md)：供 AI Agent 載入的核心工作指令與觸發條件。
 - [`schemas/audit-case.schema.json`](schemas/audit-case.schema.json)：v2.0 核心案件資料模型的 JSON Schema。
+- [`bin/skillctl`](bin/skillctl)：可直接執行的 Skill 整理 CLI wrapper。
+- [`scripts/skillctl.py`](scripts/skillctl.py)：整理、驗證、初始化與打包 Skill 的 CLI 實作。
 - [`scripts/validate_audit_case.py`](scripts/validate_audit_case.py)：本地 JSON Schema 與跨引用一致性驗證器。
 - [`scripts/evaluate_audit_rules.py`](scripts/evaluate_audit_rules.py)：v2.0 可配置檢測規則引擎。
 - [`scripts/generate_audit_report.py`](scripts/generate_audit_report.py)：v2.0 第三階段 Markdown 檢測報告生成器。
