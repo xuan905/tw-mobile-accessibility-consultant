@@ -424,3 +424,44 @@ python scripts/package_report.py reports/audit-case.md --pdf dist/audit-case.pdf
 本 repository 的案件資料可以載入線上 Evidence Flow Accessibility Audit Dashboard 預覽。工具目前支援在瀏覽器本機載入 `audit-case` JSON、檢視總覽、逐項 finding、證據索引、Android／iOS 平台環境、報告輸出，並下載 Markdown 報告或原始 JSON。
 
 Dashboard 不會把資料上傳到後端；案件 JSON 只在使用者目前的瀏覽器工作階段處理。正式驗收前，仍應以 repository 內的 Schema 驗證器、規則引擎及實機人工測試作為主要依據。
+
+
+## skillctl 進階功能：Collection CI、死鏈檢查與 Publish
+
+`skillctl validate` 現在會自動解析 `SKILL.md` 的相對 Markdown 連結。缺少的 `references/` 文件、錯誤的相對路徑，以及越出 Skill 目錄的 `../` 連結都會讓驗證失敗；外部 HTTP、mailto、tel 與頁內 anchor 則不會被本地網路檢查。需要暫時略過時可使用 `--skip-links`，但正式 CI 建議保留預設檢查：
+
+```bash
+./bin/skillctl validate . --json
+./bin/skillctl validate ./skills --strict-package --json
+```
+
+新增的 [Skills Collection workflow](.github/workflows/skills-collection.yml) 會在 Pull Request 開啟、更新或重新開啟時掃描所有 `SKILL.md`，執行 frontmatter、結構與死鏈檢查，並將 JSON 診斷上傳為 Actions artifact。
+
+`publish` 支援 GitHub Release 與自訂 Registry。所有實際網路操作都需要 token 與明確的 `--confirm`；建議先使用不會發出網路請求的 dry-run：
+
+```bash
+./bin/skillctl publish . \
+  --target github-release \
+  --repo owner/repository \
+  --tag v2.0.0 \
+  --dry-run
+
+GITHUB_TOKEN="$TOKEN" ./bin/skillctl publish . \
+  --target github-release \
+  --repo owner/repository \
+  --tag v2.0.0 \
+  --token-env GITHUB_TOKEN \
+  --confirm
+```
+
+Registry 發佈則使用 JSON POST endpoint：
+
+```bash
+SKILL_REGISTRY_TOKEN="$TOKEN" ./bin/skillctl publish ./skills/my-skill \
+  --target registry \
+  --registry-url https://registry.example.test/api/skills \
+  --token-env SKILL_REGISTRY_TOKEN \
+  --confirm
+```
+
+詳細規格與安全注意事項請參閱 [`docs/skillctl-guide.md`](docs/skillctl-guide.md)。

@@ -1,0 +1,42 @@
+name: Validate Skills Collection
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  skills-collection:
+    name: Validate every Skill package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate all Skills and internal Markdown links
+        run: |
+          if [ -d skills ]; then
+            python scripts/skillctl.py validate skills --strict-package --json | tee skill-validation.json
+          else
+            python scripts/skillctl.py validate . --json | tee skill-validation.json
+          fi
+
+      - name: Run skillctl tests
+        run: python -m unittest tests.test_skillctl -v
+
+      - name: Upload validation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skills-collection-validation-${{ github.run_number }}
+          path: skill-validation.json
+          if-no-files-found: ignore
+          retention-days: 14

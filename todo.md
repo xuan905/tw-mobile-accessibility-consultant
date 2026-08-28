@@ -1,9 +1,9 @@
-# skillctl CLI TODO
+# skillctl Registry and Link Validation TODO
 
-- [x] 定義 Skill 目錄契約與 CLI 子命令。
-- [x] 實作掃描與 SKILL.md frontmatter 驗證。
-- [x] 實作 inventory 的文字與 JSON 輸出。
-- [x] 實作 init 新 Skill 骨架。
-- [x] 實作 package ZIP 打包並排除暫存檔。
-- [x] 加入 unittest 測試與 README 使用說明。
-- [ ] 執行完整測試並提交交付版本。
+- [x] 檢視既有 skillctl、CI、測試與 README 契約。
+- [x] 建立 PR 觸發的 Skills collection validation workflow。
+- [x] 實作 SKILL.md Markdown 內部連結與 references 檔案死鏈檢查。
+- [x] 新增 validate 的 link-check 選項與 JSON 診斷輸出。
+- [x] 實作 publish 子指令、GitHub Release 與 Registry adapter、認證與 dry-run。
+- [x] 加入錯誤路徑、死鏈、publish dry-run 與 collection CI 測試。
+- [x] 更新 README 與 skillctl guide，執行完整測試並提交。

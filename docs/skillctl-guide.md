@@ -58,3 +58,53 @@ skills/
 ## 限制
 
 這個 CLI 只負責本地結構與格式檢查，不取代 Skill Creator 的完整語意審查、官方規範驗證或實際任務測試。它也不會自動修改既有 Skill；遇到錯誤時會輸出診斷，讓開發者決定如何修正。
+
+## Markdown 內部連結與死鏈檢查
+
+`validate` 與 `inventory` 預設會解析 `SKILL.md` 中的相對 Markdown 連結。外部 HTTP、mailto、tel 與頁內 anchor 不會被本地檢查；相對路徑必須存在於 Skill 目錄內，否則會回傳失敗。這也會阻擋 `../` 越出 Skill 目錄的連結，避免文件意外引用 package 外部檔案。
+
+```bash
+./bin/skillctl validate ./skills --json
+./bin/skillctl validate ./skills --skip-links
+```
+
+只有在明確需要忽略連結檢查時才使用 `--skip-links`。CI 應保留預設檢查，讓缺少的 `references/*.md` 或其他內部文件在 Pull Request 階段就被發現。
+
+## Pull Request collection CI
+
+`.github/workflows/skills-collection.yml` 會在 Pull Request 開啟、更新或重新開啟時掃描整個 `skills/` 目錄；若 repository 沒有 collection 目錄，則驗證 repository 根目錄的 Skill workspace。工作流會上傳 JSON 診斷 artifact，方便查看哪個 Skill、哪一條連結或哪一個 frontmatter 欄位失敗。
+
+## Publish：GitHub Release 與 Registry
+
+`publish` 會先執行嚴格 Skill 驗證，再產生 ZIP。實際網路操作預設被阻擋，必須明確使用 `--confirm`；建議先用 `--dry-run` 檢查 package 與發佈計畫：
+
+```bash
+./bin/skillctl publish . \
+  --target github-release \
+  --repo owner/repository \
+  --tag v2.0.0 \
+  --dry-run
+```
+
+GitHub Release 實際發佈需要 `GITHUB_TOKEN` 或自訂環境變數，並指定 repository 與 tag：
+
+```bash
+GITHUB_TOKEN="$TOKEN" ./bin/skillctl publish . \
+  --target github-release \
+  --repo owner/repository \
+  --tag v2.0.0 \
+  --token-env GITHUB_TOKEN \
+  --confirm
+```
+
+Registry adapter 使用 JSON `POST`，payload 會包含 Skill 名稱、版本、描述、ZIP 檔名與 Base64 package；endpoint 與 token 由使用者提供：
+
+```bash
+SKILL_REGISTRY_TOKEN="$TOKEN" ./bin/skillctl publish ./skills/my-skill \
+  --target registry \
+  --registry-url https://registry.example.test/api/skills \
+  --token-env SKILL_REGISTRY_TOKEN \
+  --confirm
+```
+
+請不要把 token 寫入規則檔、repository 或 shell history。`skillctl` 不會在 dry-run 中發出網路請求，也不會在缺少 `--confirm` 時執行實際 publish。
